@@ -11,11 +11,9 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
-def get_video_info(url, cookies_path=None):
+def get_video_info(url):
     """Gets video information without downloading."""
     ydl_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True}
-    if cookies_path:
-        ydl_opts['cookiefile'] = cookies_path
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
             return ydl.extract_info(url, download=False)
@@ -31,28 +29,13 @@ def index():
 @app.route('/info', methods=['POST'])
 def get_info():
     """Gets video info (title, thumbnail) from a URL."""
-    data = request.form or request.get_json() or {}
-    url = data.get('url')
-
-    cookies_file_path = None
-    temp_cookies_file = None
-    if 'cookies' in request.files:
-        cookies = request.files['cookies']
-        temp_cookies_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
-        cookies.save(temp_cookies_file)
-        cookies_file_path = temp_cookies_file.name
-
+    url = request.get_json().get('url')
     if not url:
         return jsonify({'error': 'URL is required.'}), 400
 
-    info = get_video_info(url, cookies_file_path)
+    info = get_video_info(url)
     if not info:
-        if cookies_file_path:
-            os.remove(cookies_file_path)
         return jsonify({'error': 'Could not retrieve video information. The URL might be invalid or private.'}), 404
-
-    if cookies_file_path:
-        os.remove(cookies_file_path)
 
     return jsonify({
         'title': info.get('title', 'No title'),
@@ -61,35 +44,33 @@ def get_info():
 
 @app.route('/download', methods=['POST'])
 def download():
-    """Handles the download request."""
-    data = request.form if request.form else request.get_json()
-    url = data.get('url')
-    format_type = data.get('format', 'mp4')
-    quality = data.get('quality')
-
-    cookies_file_path = None
-    temp_cookies_file = None
-    if 'cookies' in request.files:
-        cookies = request.files['cookies']
-        temp_cookies_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
-        cookies.save(temp_cookies_file)
-        cookies_file_path = temp_cookies_file.name
-    elif data.get('cookies_path'):  # If cookies path supplied in JSON
-        cookies_file_path = data.get('cookies_path')
-
-    if not url:
+    """Handles the download request with support for multipart/form-data."""
+    if 'url' not in request.form:
         return jsonify({'error': 'URL is required.'}), 400
 
+    url = request.form['url']
+    format_type = request.form.get('format', 'mp4')
+    quality = request.form.get('quality')
+    cookie_file = request.files.get('cookieFile')
+
     temp_dir = tempfile.mkdtemp(prefix='yt-dl-')
+    cookie_file_path = None
 
     try:
+        # Save cookie file if it exists
+        if cookie_file:
+            cookie_file_path = os.path.join(temp_dir, 'cookies.txt')
+            cookie_file.save(cookie_file_path)
+            logging.info(f"Saved cookies file to {cookie_file_path}")
+
         ydl_opts = {
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
             'noplaylist': True,
             'logger': logging.getLogger(),
         }
-        if cookies_file_path:
-            ydl_opts['cookiefile'] = cookies_file_path
+
+        if cookie_file_path:
+            ydl_opts['cookies'] = cookie_file_path
 
         if format_type == 'mp3':
             ydl_opts.update({
@@ -145,8 +126,16 @@ def download():
 
     except yt_dlp.utils.DownloadError as e:
         logging.error(f"yt-dlp download error: {e}")
-        error_message = str(e).split(':')[-1].strip()
-        return jsonify({'error': f'Download failed: {error_message}'}), 500
+        error_message = str(e)
+        if 'HTTP Error 429' in error_message:
+            error_message = 'Too many requests. Please try again later.'
+        elif 'Private video' in error_message:
+            error_message = 'This is a private video. Try using a cookies file.'
+        elif 'age-restricted' in error_message:
+             error_message = 'This video is age-restricted. Please provide a cookies file from a logged-in account.'
+        else:
+            error_message = "Download failed. The video may be private, unavailable, or require a cookies file."
+        return jsonify({'error': error_message}), 500
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}", exc_info=True)
         return jsonify({'error': 'An unexpected server error occurred.'}), 500
@@ -154,8 +143,6 @@ def download():
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
             logging.info(f"Cleaned up directory: {temp_dir}")
-        if cookies_file_path and os.path.exists(cookies_file_path):
-            os.remove(cookies_file_path)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

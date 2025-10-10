@@ -1,8 +1,8 @@
 # YouTube Media Fetcher
 
-YouTube Media Fetcher is a modern, production-ready web application that allows users to download YouTube videos as MP3 (audio) or MP4 (video) files with selectable quality options. It features a sleek, responsive frontend built with TailwindCSS and a robust Flask backend powered by `yt-dlp`.
+YouTube Media Fetcher is a modern, production-ready web application that allows users to download YouTube videos as MP3 (audio) or MP4 (video) files with selectable quality options. It features a sleek, responsive frontend built with TailwindCSS and a robust, containerized Flask backend powered by `yt-dlp`.
 
-![App Screenshot](https://i.imgur.com/your-screenshot.png) <!-- Placeholder -->
+![App Screenshot](https://i.imgur.com/your-screenshot.png) <!-- Placeholder for a future screenshot -->
 
 ## Features
 
@@ -11,129 +11,88 @@ YouTube Media Fetcher is a modern, production-ready web application that allows 
 - **Quality Selection**:
     - **MP4**: Best Available, 1080p, 720p, 360p.
     - **MP3**: High (320kbps), Medium (192kbps), Low (128kbps).
+- **Cookie Support**: Upload your browser's `cookies.txt` file to download age-restricted, private, or members-only videos.
 - **Video Preview**: Shows video thumbnail and title automatically after pasting a URL.
 - **Responsive Design**: Looks great on both desktop and mobile devices.
 - **Dark/Light Theme**: A theme toggle for user preference.
 - **User-Friendly Notifications**: Animated, elegant alerts for errors, progress, and success.
 - **Reliable Backend**: Uses the powerful `yt-dlp` library for downloading and `ffmpeg` for conversion.
 - **Automatic Cleanup**: Temporary files are deleted immediately after being sent to the user.
-- **Ready for Deployment**: Includes configuration for one-click deployment on Render.com.
+- **Containerized Deployment**: Uses Docker for a stable, reliable, and easy-to-deploy application on services like Render.
+
+## Using Cookies for Restricted Videos
+
+Many YouTube videos are now protected (e.g., age-restricted, private, members-only) and require you to be logged in to view them. To download these videos, you must provide the application with your browser's YouTube cookies.
+
+### How to Get Your `cookies.txt` File
+
+1.  **Install a Browser Extension**: Use an extension that can export cookies in the standard `Netscape` format (usually a `cookies.txt` file). A recommended extension is:
+    *   **Get cookies.txt** ([Chrome](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfdhebiahabn) / [Firefox](https://addons.mozilla.org/en-US/firefox/addon/get-cookiestxt/))
+
+2.  **Export the Cookies**:
+    *   Go to `https://www.youtube.com` and make sure you are logged into your account.
+    *   Click the extension's icon in your browser toolbar.
+    *   Click the **"Export"** or **"Export as .txt"** button.
+    *   Save the `cookies.txt` file to your computer.
+
+3.  **Upload to the App**:
+    *   In the YouTube Media Fetcher app, click the **"Choose File"** button under "YouTube Cookies (Optional)".
+    *   Select the `cookies.txt` file you just downloaded.
+    *   Now, when you click "Download", your cookies will be used to authenticate with YouTube.
 
 ## How to Run Locally
 
-Follow these steps to get the application running on your local machine.
-
 ### Prerequisites
 
-- Python 3.11+
-- `pip` (Python package installer)
-- `ffmpeg`: This must be installed and available in your system's PATH.
-    - **macOS (with Homebrew)**: `brew install ffmpeg`
-    - **Ubuntu/Debian**: `sudo apt-get update && sudo apt-get install ffmpeg`
-    - **Windows**: Download from the [official website](https://ffmpeg.org/download.html) and add the `bin` directory to your PATH.
+-   Python 3.11+ & `pip`
+-   **Docker**: The easiest way to run the app locally is with Docker, as it handles all dependencies.
+-   **ffmpeg** (if not using Docker): This must be installed on your system.
 
-### Installation & Setup
+### Option 1: Running with Docker (Recommended)
 
-1.  **Clone the repository:**
+1.  **Build the Docker image:**
     ```bash
-    git clone https://github.com/your-username/youtube-media-fetcher.git
+    docker build -t youtube-media-fetcher .
+    ```
+2.  **Run the Docker container:**
+    ```bash
+    docker run -p 8080:8080 youtube-media-fetcher
+    ```
+3.  Open your browser to `http://127.0.0.1:8080`.
+
+### Option 2: Running Directly with Python
+
+1.  **Clone the repository and install dependencies:**
+    ```bash
+    git clone <your-repo-url>
     cd youtube-media-fetcher
-    ```
-
-2.  **Create and activate a virtual environment (recommended):**
-    ```bash
-    # For macOS/Linux
-    python3 -m venv venv
-    source venv/bin/activate
-
-    # For Windows
-    python -m venv venv
-    .\venv\Scripts\activate
-    ```
-
-3.  **Install the required Python packages:**
-    ```bash
     pip install -r requirements.txt
     ```
-
-4.  **Run the Flask application:**
-    ```bash
-    flask run
-    ```
-    Alternatively, for development mode:
+2.  **Run the Flask application:**
     ```bash
     python app.py
     ```
-
-5.  **Open your browser** and navigate to `http://127.0.0.1:5000` (or the address shown in your terminal).
+3.  Open your browser to `http://127.0.0.1:8080`.
 
 ## How to Deploy on Render
 
-This application is configured for easy deployment on [Render](https://render.com/).
-
-### One-Click Deployment
-
-You can deploy your own instance of this app by clicking the button below:
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Eclips77/Media-downloader-)
-
-*(You will need to replace the repository URL in the button link with your own once you've forked/cloned it.)*
-
-### Manual Deployment Steps
+This application is configured for easy, one-click deployment on [Render](https://render.com/) using Docker.
 
 1.  **Fork this repository** to your own GitHub account.
-2.  **Go to the Render Dashboard** and click **"New +"** -> **"Web Service"**.
-3.  **Connect your GitHub account** and select your forked repository.
-4.  **Configure the service:**
-    - **Name**: `youtube-media-fetcher` (or your preferred name).
-    - **Region**: Choose a region close to you.
-    - **Branch**: `main` (or your default branch).
-    - **Build Command**: `pip install -r requirements.txt && apt-get update && apt-get install -y ffmpeg`
-    - **Start Command**: `gunicorn app:app --timeout 120`
-    - **Instance Type**: `Free` is sufficient for basic use.
-
-5.  **Click "Create Web Service"**. Render will automatically build and deploy your application. The `render.yaml` file in this repository ensures these settings are applied by default.
+2.  Go to the **Render Dashboard**, click **"New +"** -> **"Web Service"**.
+3.  Connect your GitHub account and select your forked repository.
+4.  Render will automatically detect the `render.yaml` file and configure the service to use **Docker**. All settings, including the start command, are handled by the `Dockerfile`.
+5.  Give your service a name and click **"Create Web Service"**. Render will build the Docker image and deploy your application.
 
 ## Maintenance & Customization
 
 ### Updating `yt-dlp`
 
-YouTube frequently changes its backend, which can break download functionality. `yt-dlp` is updated regularly to fix these issues. To keep the app working, you should update it periodically.
-
--   **Locally**:
-    ```bash
-    pip install --upgrade yt-dlp
-    ```
--   **On Render**: You can redeploy your application from the Render dashboard (select "Manual Deploy" -> "Deploy latest commit"). This will reinstall all packages, including the latest version of `yt-dlp` available at that time.
+To get the latest version of `yt-dlp` with fixes for YouTube's changes:
+-   **Locally**: Re-build your Docker image (`docker build ...`) or run `pip install --upgrade yt-dlp`.
+-   **On Render**: Go to your service's dashboard and trigger a new deploy. This will pull the latest version of `yt-dlp` as defined in `requirements.txt`.
 
 ### Modifying Quality Options
 
-You can easily change the available quality options.
-
-1.  **Backend (`app.py`)**:
-    -   Modify the dictionaries inside the `/download` route to change the `yt-dlp` format codes or FFmpeg quality settings.
-    ```python
-    # Example for MP3 quality
-    'preferredquality': {
-        'Low': '128', # Change bitrate here
-        'Medium': '192',
-        'High': '320'
-    }
-    ```
-
-2.  **Frontend (`static/app.js`)**:
-    -   Update the `qualityOptions` object to match the options you want to display to the user.
-    ```javascript
-    const qualityOptions = {
-        mp4: ['Best Available', '1080p', '720p', '480p', '360p'], // Added 480p
-        mp3: ['High', 'Medium', 'Low']
-    };
-    ```
-
-### Customizing the Design
-
-The frontend is built with **TailwindCSS** and is easy to customize.
-
--   **Colors & Theme**: Edit the CSS custom properties (`:root`) in the `<style>` tag of `templates/index.html`.
--   **Layout & Components**: Modify the HTML structure and TailwindCSS classes in `templates/index.html`.
--   **Behavior**: All frontend logic is located in `static/app.js`. You can change animations, alerts, and interaction logic here.
+1.  **Backend (`app.py`)**: Modify the quality dictionaries in the `/download` route.
+2.  **Frontend (`static/app.js`)**: Update the `qualityOptions` object to match the user-facing text.
