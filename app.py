@@ -70,7 +70,7 @@ def download():
         }
 
         if cookie_file_path:
-            ydl_opts['cookies'] = cookie_file_path
+            ydl_opts['cookiefile'] = cookie_file_path
 
         if format_type == 'mp3':
             ydl_opts.update({
