@@ -11,9 +11,11 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
-def get_video_info(url):
+def get_video_info(url, cookies_path=None):
     """Gets video information without downloading."""
     ydl_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True}
+    if cookies_path:
+        ydl_opts['cookiefile'] = cookies_path
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
             return ydl.extract_info(url, download=False)
@@ -29,13 +31,28 @@ def index():
 @app.route('/info', methods=['POST'])
 def get_info():
     """Gets video info (title, thumbnail) from a URL."""
-    url = request.get_json().get('url')
+    data = request.form or request.get_json() or {}
+    url = data.get('url')
+
+    cookies_file_path = None
+    temp_cookies_file = None
+    if 'cookies' in request.files:
+        cookies = request.files['cookies']
+        temp_cookies_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
+        cookies.save(temp_cookies_file)
+        cookies_file_path = temp_cookies_file.name
+
     if not url:
         return jsonify({'error': 'URL is required.'}), 400
 
-    info = get_video_info(url)
+    info = get_video_info(url, cookies_file_path)
     if not info:
+        if cookies_file_path:
+            os.remove(cookies_file_path)
         return jsonify({'error': 'Could not retrieve video information. The URL might be invalid or private.'}), 404
+
+    if cookies_file_path:
+        os.remove(cookies_file_path)
 
     return jsonify({
         'title': info.get('title', 'No title'),
@@ -45,10 +62,20 @@ def get_info():
 @app.route('/download', methods=['POST'])
 def download():
     """Handles the download request."""
-    data = request.get_json()
+    data = request.form if request.form else request.get_json()
     url = data.get('url')
     format_type = data.get('format', 'mp4')
     quality = data.get('quality')
+
+    cookies_file_path = None
+    temp_cookies_file = None
+    if 'cookies' in request.files:
+        cookies = request.files['cookies']
+        temp_cookies_file = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
+        cookies.save(temp_cookies_file)
+        cookies_file_path = temp_cookies_file.name
+    elif data.get('cookies_path'):  # If cookies path supplied in JSON
+        cookies_file_path = data.get('cookies_path')
 
     if not url:
         return jsonify({'error': 'URL is required.'}), 400
@@ -61,6 +88,8 @@ def download():
             'noplaylist': True,
             'logger': logging.getLogger(),
         }
+        if cookies_file_path:
+            ydl_opts['cookiefile'] = cookies_file_path
 
         if format_type == 'mp3':
             ydl_opts.update({
@@ -125,6 +154,8 @@ def download():
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
             logging.info(f"Cleaned up directory: {temp_dir}")
+        if cookies_file_path and os.path.exists(cookies_file_path):
+            os.remove(cookies_file_path)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
