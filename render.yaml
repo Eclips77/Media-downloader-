@@ -1,12 +1,17 @@
+# render.yaml using Docker for deployment
+
 services:
   - type: web
     name: youtube-media-fetcher
-    env: python
+    # Set the environment to 'docker' to use the Dockerfile
+    env: docker
     plan: free # Or your desired plan
-    buildCommand: "apt-get clean && rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --allow-releaseinfo-change ffmpeg && pip install -r requirements.txt"
-    startCommand: "gunicorn app:app --timeout 120"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.5
-      - key: FLASK_ENV
-        value: production
+    # Render will automatically detect and use the Dockerfile in the root of the repository.
+    # The 'buildCommand' and 'startCommand' are now defined within the Dockerfile,
+    # so they are not needed here.
+    # Health check path can be useful for Render to know when the service is up.
+    healthCheckPath: /
+    # Optional: Set environment variables if needed by the application at runtime.
+    # envVars:
+    #   - key: YOUR_ENV_VAR
+    #     value: your_value
