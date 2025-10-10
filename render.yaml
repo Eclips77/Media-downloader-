@@ -5,6 +5,8 @@ services:
     name: youtube-media-fetcher
     # Set the environment to 'docker' to use the Dockerfile
     env: docker
+    # Set the region to Frankfurt for lower latency from Europe/Middle East
+    region: frankfurt
     plan: free # Or your desired plan
     # Render will automatically detect and use the Dockerfile in the root of the repository.
     # The 'buildCommand' and 'startCommand' are now defined within the Dockerfile,
