@@ -3,7 +3,7 @@ services:
     name: youtube-media-fetcher
     env: python
     plan: free # Or your desired plan
-    buildCommand: "apt-get clean && rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y ffmpeg && pip install -r requirements.txt"
+    buildCommand: "sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* && sudo apt-get update && sudo apt-get install -y --allow-releaseinfo-change ffmpeg && pip install -r requirements.txt"
     startCommand: "gunicorn app:app --timeout 120"
     envVars:
       - key: PYTHON_VERSION
