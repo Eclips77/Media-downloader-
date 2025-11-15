@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const qualityContainer = document.getElementById('quality-container');
     const downloadForm = document.getElementById('download-form');
     const downloadBtn = document.getElementById('download-btn');
-    const cookieFileInput = document.getElementById('cookie-file');
     const btnText = document.getElementById('btn-text');
     const loader = document.getElementById('loader');
     const thumbnailPreview = document.getElementById('thumbnail-preview');
@@ -128,10 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('url', url);
         formData.append('format', formatSelect.value);
         formData.append('quality', qualitySelect.value);
-
-        if (cookieFileInput.files.length > 0) {
-            formData.append('cookieFile', cookieFileInput.files[0]);
-        }
 
         try {
             const response = await fetch('/download', {
