@@ -11,7 +11,7 @@ YouTube Media Fetcher is a modern, production-ready web application that allows 
 - **Quality Selection**:
     - **MP4**: Best Available, 1080p, 720p, 360p.
     - **MP3**: High (320kbps), Medium (192kbps), Low (128kbps).
-- **Cookie Support**: Upload your browser's `cookies.txt` file to download age-restricted, private, or members-only videos.
+- **Bypass Age-Restriction**: Automatically bypasses YouTube's age-gate for most videos.
 - **Video Preview**: Shows video thumbnail and title automatically after pasting a URL.
 - **Responsive Design**: Looks great on both desktop and mobile devices.
 - **Dark/Light Theme**: A theme toggle for user preference.
@@ -19,26 +19,6 @@ YouTube Media Fetcher is a modern, production-ready web application that allows 
 - **Reliable Backend**: Uses the powerful `yt-dlp` library for downloading and `ffmpeg` for conversion.
 - **Automatic Cleanup**: Temporary files are deleted immediately after being sent to the user.
 - **Containerized Deployment**: Uses Docker for a stable, reliable, and easy-to-deploy application on services like Render.
-
-## Using Cookies for Restricted Videos
-
-Many YouTube videos are now protected (e.g., age-restricted, private, members-only) and require you to be logged in to view them. To download these videos, you must provide the application with your browser's YouTube cookies.
-
-### How to Get Your `cookies.txt` File
-
-1.  **Install a Browser Extension**: Use an extension that can export cookies in the standard `Netscape` format (usually a `cookies.txt` file). A recommended extension is:
-    *   **Get cookies.txt** ([Chrome](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfdhebiahabn) / [Firefox](https://addons.mozilla.org/en-US/firefox/addon/get-cookiestxt/))
-
-2.  **Export the Cookies**:
-    *   Go to `https://www.youtube.com` and make sure you are logged into your account.
-    *   Click the extension's icon in your browser toolbar.
-    *   Click the **"Export"** or **"Export as .txt"** button.
-    *   Save the `cookies.txt` file to your computer.
-
-3.  **Upload to the App**:
-    *   In the YouTube Media Fetcher app, click the **"Choose File"** button under "YouTube Cookies (Optional)".
-    *   Select the `cookies.txt` file you just downloaded.
-    *   Now, when you click "Download", your cookies will be used to authenticate with YouTube.
 
 ## How to Run Locally
 
