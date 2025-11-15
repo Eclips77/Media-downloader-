@@ -1,0 +1,19 @@
+# render.yaml using Docker for deployment
+
+services:
+  - type: web
+    name: youtube-media-fetcher
+    # Set the environment to 'docker' to use the Dockerfile
+    env: docker
+    # Set the region to Frankfurt for lower latency from Europe/Middle East
+    region: frankfurt
+    plan: free # Or your desired plan
+    # Render will automatically detect and use the Dockerfile in the root of the repository.
+    # The 'buildCommand' and 'startCommand' are now defined within the Dockerfile,
+    # so they are not needed here.
+    # Health check path can be useful for Render to know when the service is up.
+    healthCheckPath: /
+    # Optional: Set environment variables if needed by the application at runtime.
+    # envVars:
+    #   - key: YOUR_ENV_VAR
+    #     value: your_value
