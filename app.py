@@ -28,15 +28,16 @@ def extract_video_id(url):
 
 def get_video_info(url):
     """Gets video information without downloading."""
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-    }
+    video_id = extract_video_id(url)
+    if not video_id:
+        return None
+
+    ydl_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            return ydl.extract_info(url, download=False)
+            # Prepend Invidious instance to bypass age restrictions
+            invidious_url = f"https://yewtu.be/watch?v={video_id}"
+            return ydl.extract_info(invidious_url, download=False)
         except yt_dlp.utils.DownloadError as e:
             logging.error(f"Error extracting video info: {e}")
             return None
@@ -101,6 +102,10 @@ def download():
     format_type = request.form.get('format', 'mp4')
     quality = request.form.get('quality')
 
+    video_id = extract_video_id(url)
+    if not video_id:
+        return jsonify({'error': 'Invalid YouTube URL.'}), 400
+
     temp_dir = tempfile.mkdtemp(prefix='yt-dl-')
 
     try:
@@ -133,9 +138,12 @@ def download():
             }.get(quality, 'bestvideo+bestaudio/best')
             ydl_opts['format'] = format_note
 
+        # Prepend Invidious instance to bypass age restrictions
+        invidious_url = f"https://yewtu.be/watch?v={video_id}"
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             logging.info(f"Downloading with options: {ydl_opts}")
-            info = ydl.extract_info(url, download=True)
+            info = ydl.extract_info(invidious_url, download=True)
 
             filename = ydl.prepare_filename(info)
             if format_type == 'mp3':

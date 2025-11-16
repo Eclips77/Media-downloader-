@@ -11,9 +11,8 @@ YouTube Media Fetcher is a modern, production-ready web application that allows 
 - **Quality Selection**:
     - **MP4**: Best Available, 1080p, 720p, 360p.
     - **MP3**: High (320kbps), Medium (192kbps), Low (128kbps).
-- **YouTube Search**: Search for videos directly from the input field.
 - **Bypass Age-Restriction**: Automatically bypasses YouTube's age-gate for most videos.
-- **Video Preview**: Shows video thumbnail and title automatically after pasting a URL or selecting a search result.
+- **Video Preview**: Shows video thumbnail and title automatically after pasting a URL.
 - **Responsive Design**: Looks great on both desktop and mobile devices.
 - **Dark/Light Theme**: A theme toggle for user preference.
 - **User-Friendly Notifications**: Animated, elegant alerts for errors, progress, and success.
