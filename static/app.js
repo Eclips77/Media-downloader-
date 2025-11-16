@@ -1,19 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const themeToggle = document.getElementById('theme-toggle');
-    const urlInput = document.getElementById('youtube-url');
+    const urlInput = document.getElementById('youtube-input'); // Changed from youtube-url
     const formatSelect = document.getElementById('format-select');
     const qualitySelect = document.getElementById('quality-select');
     const qualityContainer = document.getElementById('quality-container');
     const downloadForm = document.getElementById('download-form');
     const downloadBtn = document.getElementById('download-btn');
-    const cookieFileInput = document.getElementById('cookie-file');
     const btnText = document.getElementById('btn-text');
     const loader = document.getElementById('loader');
     const thumbnailPreview = document.getElementById('thumbnail-preview');
     const thumbnailImg = document.getElementById('thumbnail-img');
     const videoTitle = document.getElementById('video-title');
     const alertContainer = document.getElementById('alert-container');
+    const searchResultsContainer = document.getElementById('search-results');
 
     // --- Quality Options ---
     const qualityOptions = {
@@ -77,14 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Fetches video info and displays thumbnail.
      */
-    const fetchVideoInfo = async () => {
-        const url = urlInput.value.trim();
-        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
-        if (!youtubeRegex.test(url)) {
-            thumbnailPreview.classList.add('hidden');
-            return;
-        }
-
+    const fetchVideoInfo = async (url) => {
         try {
             const response = await fetch('/info', {
                 method: 'POST',
@@ -101,12 +94,71 @@ document.addEventListener('DOMContentLoaded', () => {
             thumbnailImg.src = data.thumbnail;
             videoTitle.textContent = data.title;
             thumbnailPreview.classList.remove('hidden');
+            searchResultsContainer.classList.add('hidden'); // Hide search results
 
         } catch (error) {
             showAlert(error.message);
             thumbnailPreview.classList.add('hidden');
         }
     };
+
+    /**
+     * Searches for videos and displays results.
+     */
+    const searchVideos = async (query) => {
+        searchResultsContainer.innerHTML = '<p class="text-center text-gray-500">Searching...</p>';
+        searchResultsContainer.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to perform search.');
+            }
+
+            const videos = await response.json();
+            displaySearchResults(videos);
+
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
+
+    /**
+     * Displays search results in the UI.
+     * @param {Array} videos - An array of video objects.
+     */
+    const displaySearchResults = (videos) => {
+        searchResultsContainer.innerHTML = '';
+        if (videos.length === 0) {
+            searchResultsContainer.innerHTML = '<p class="text-center text-gray-500">No results found.</p>';
+            searchResultsContainer.classList.remove('hidden');
+            return;
+        }
+
+        videos.forEach(video => {
+            const videoElement = document.createElement('div');
+            videoElement.className = 'flex items-center p-2 rounded-lg hover:bg-gray-700 cursor-pointer';
+            videoElement.innerHTML = `
+                <img src="${video.thumbnail}" alt="${video.title}" class="w-16 h-9 object-cover rounded mr-4">
+                <span class="text-sm">${video.title}</span>
+            `;
+            videoElement.addEventListener('click', () => {
+                const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
+                urlInput.value = videoUrl;
+                fetchVideoInfo(videoUrl);
+            });
+            searchResultsContainer.appendChild(videoElement);
+        });
+
+        searchResultsContainer.classList.remove('hidden');
+    };
+
 
     /**
      * Handles the form submission for downloading the media.
@@ -129,14 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('format', formatSelect.value);
         formData.append('quality', qualitySelect.value);
 
-        if (cookieFileInput.files.length > 0) {
-            formData.append('cookieFile', cookieFileInput.files[0]);
-        }
-
         try {
             const response = await fetch('/download', {
                 method: 'POST',
-                body: formData // No 'Content-Type' header, browser sets it automatically
+                body: formData
             });
 
             if (!response.ok) {
@@ -182,7 +230,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let debounceTimer;
     urlInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(fetchVideoInfo, 500);
+        debounceTimer = setTimeout(() => {
+            const query = urlInput.value.trim();
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+
+            if (youtubeRegex.test(query)) {
+                fetchVideoInfo(query);
+            } else if (query.length > 2) {
+                searchVideos(query);
+            } else {
+                searchResultsContainer.classList.add('hidden');
+                thumbnailPreview.classList.add('hidden');
+            }
+        }, 1000);
     });
 
     // --- Initial Setup ---
