@@ -3,6 +3,7 @@ import tempfile
 import logging
 import io
 import shutil
+import re
 from flask import Flask, render_template, request, send_file, jsonify
 import yt_dlp
 
@@ -13,7 +14,12 @@ app = Flask(__name__)
 
 def get_video_info(url):
     """Gets video information without downloading."""
-    ydl_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True}
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': True,
+        'extractor_args': {'youtube': {'player_client': ['android']}}
+    }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
             return ydl.extract_info(url, download=False)
@@ -42,35 +48,58 @@ def get_info():
         'thumbnail': info.get('thumbnail', '')
     })
 
+@app.route('/search', methods=['POST'])
+def search():
+    """Searches for videos on YouTube."""
+    query = request.get_json().get('query')
+    if not query:
+        return jsonify({'error': 'Query is required.'}), 400
+
+    try:
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'default_search': 'ytsearch5',
+            'extractor_args': {'youtube': {'player_client': ['android']}}
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(query, download=False)
+            videos = []
+            if 'entries' in result:
+                for entry in result['entries']:
+                    videos.append({
+                        'id': entry.get('id'),
+                        'title': entry.get('title'),
+                        'thumbnail': entry.get('thumbnail'),
+                        'channel': entry.get('channel'),
+                        'duration_string': entry.get('duration_string'),
+                    })
+            return jsonify(videos)
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during search: {e}", exc_info=True)
+        return jsonify({'error': 'An unexpected server error occurred during search.'}), 500
+
 @app.route('/download', methods=['POST'])
 def download():
-    """Handles the download request with support for multipart/form-data."""
+    """Handles the download request."""
     if 'url' not in request.form:
         return jsonify({'error': 'URL is required.'}), 400
 
     url = request.form['url']
     format_type = request.form.get('format', 'mp4')
     quality = request.form.get('quality')
-    cookie_file = request.files.get('cookieFile')
 
     temp_dir = tempfile.mkdtemp(prefix='yt-dl-')
-    cookie_file_path = None
 
     try:
-        # Save cookie file if it exists
-        if cookie_file:
-            cookie_file_path = os.path.join(temp_dir, 'cookies.txt')
-            cookie_file.save(cookie_file_path)
-            logging.info(f"Saved cookies file to {cookie_file_path}")
-
         ydl_opts = {
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
             'noplaylist': True,
             'logger': logging.getLogger(),
+            'limit_rate': '10M',
+            'extractor_args': {'youtube': {'player_client': ['android']}}
         }
-
-        if cookie_file_path:
-            ydl_opts['cookiefile'] = cookie_file_path
 
         if format_type == 'mp3':
             ydl_opts.update({
@@ -127,14 +156,12 @@ def download():
     except yt_dlp.utils.DownloadError as e:
         logging.error(f"yt-dlp download error: {e}")
         error_message = str(e)
-        if 'HTTP Error 429' in error_message:
+        if 'private video' in error_message.lower() or 'age restricted' in error_message.lower():
+            error_message = "This video is private or age-restricted. While we try to bypass this, some videos may still be unavailable."
+        elif 'HTTP Error 429' in error_message:
             error_message = 'Too many requests. Please try again later.'
-        elif 'Private video' in error_message:
-            error_message = 'This is a private video. Try using a cookies file.'
-        elif 'age-restricted' in error_message:
-             error_message = 'This video is age-restricted. Please provide a cookies file from a logged-in account.'
         else:
-            error_message = "Download failed. The video may be private, unavailable, or require a cookies file."
+            error_message = "Download failed. The video may be unavailable."
         return jsonify({'error': error_message}), 500
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}", exc_info=True)
