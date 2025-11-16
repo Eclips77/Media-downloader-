@@ -73,43 +73,37 @@
         <div class="theme-card rounded-xl shadow-lg p-6 md:p-10 border">
             <div class="text-center mb-8">
                 <h1 class="text-3xl md:text-4xl font-bold">YouTube Media Fetcher</h1>
-                <p class="text-gray-400 mt-2">Download videos, audio, and playlists.</p>
+                <p class="text-gray-400 mt-2">Download YouTube videos as MP3 or MP4 with ease.</p>
             </div>
 
             <!-- URL Input / Search -->
             <form id="download-form">
                 <div class="relative mb-4">
-                    <i class="fas fa-search absolute top-1/2 left-4 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="youtube-input" placeholder="Paste URL or search..." class="theme-input w-full p-4 pl-12 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
+                    <input type="text" id="youtube-input" placeholder="Paste YouTube URL or search..." class="theme-input w-full p-4 pr-12 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
                 </div>
 
                 <!-- Search Results -->
-                <div id="search-results" class="hidden mb-4 grid grid-cols-1 gap-2"></div>
+                <div id="search-results" class="hidden mb-4"></div>
 
-                <!-- Preview Area -->
-                <div id="preview-area" class="hidden text-center mb-4 slide-in">
-                    <img id="preview-img" src="" alt="Thumbnail" class="rounded-lg mx-auto shadow-md max-h-48">
-                    <p id="preview-title" class="mt-2 font-semibold"></p>
+                <!-- Thumbnail Preview -->
+                <div id="thumbnail-preview" class="hidden text-center mb-4 slide-in">
+                    <img id="thumbnail-img" src="" alt="Video Thumbnail" class="rounded-lg mx-auto shadow-md max-h-48">
+                    <p id="video-title" class="mt-2 font-semibold"></p>
                 </div>
-
-                <!-- Download Links Area -->
-                <div id="download-links" class="mt-4 text-center"></div>
 
                 <!-- Format and Quality Selection -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label for="format-select" class="block text-sm font-medium mb-1">Format</label>
                         <select id="format-select" class="theme-input w-full p-2 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none">
-                            <option value="mp4">MP4 (Video)</option>
-                            <option value="mp3">MP3 (Audio)</option>
-                            <option value="wav">WAV (Audio)</option>
-                            <option value="m4a">M4A (Audio)</option>
+                            <option value="mp4">MP4</option>
+                            <option value="mp3">MP3</option>
                         </select>
                     </div>
                     <div id="quality-container">
                         <label for="quality-select" class="block text-sm font-medium mb-1">Quality</label>
                         <select id="quality-select" class="theme-input w-full p-2 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none">
-                            <!-- Quality options for video and audio -->
+                            <!-- Options will be populated by JS -->
                         </select>
                     </div>
                 </div>
