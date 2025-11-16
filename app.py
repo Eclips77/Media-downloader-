@@ -175,7 +175,9 @@ def download():
     except yt_dlp.utils.DownloadError as e:
         logging.error(f"yt-dlp download error: {e}")
         error_message = str(e)
-        if 'HTTP Error 429' in error_message:
+        if 'private video' in error_message.lower() or 'age restricted' in error_message.lower():
+            error_message = "This video is private or age-restricted. While we try to bypass this, some videos may still be unavailable."
+        elif 'HTTP Error 429' in error_message:
             error_message = 'Too many requests. Please try again later.'
         else:
             error_message = "Download failed. The video may be private or unavailable."

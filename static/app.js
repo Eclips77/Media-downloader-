@@ -167,11 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const url = urlInput.value.trim();
         if (!url) {
-            showAlert('Please paste a YouTube URL first.');
+            showAlert('Please paste a YouTube URL or select a video.');
             return;
         }
 
-        // --- Show loading state ---
         btnText.textContent = 'Preparing...';
         loader.classList.remove('hidden');
         downloadBtn.disabled = true;
@@ -192,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorData.error || 'An unknown error occurred.');
             }
 
-            // --- Handle file download ---
             const blob = await response.blob();
             const contentDisposition = response.headers.get('content-disposition');
             let filename = 'download';
@@ -214,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showAlert(error.message, 'error');
         } finally {
-            // --- Reset button state ---
             btnText.textContent = 'Download';
             loader.classList.add('hidden');
             downloadBtn.disabled = false;

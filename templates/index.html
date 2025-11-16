@@ -17,29 +17,35 @@
 
         /* Light & Dark theme custom properties */
         :root {
-            --bg-color: #f9fafb;
+            --bg-gradient-start: #f3e7e9;
+            --bg-gradient-end: #e3eeff;
             --text-color: #111827;
-            --card-bg: #ffffff;
-            --input-bg: #f3f4f6;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --input-bg: #ffffff;
             --border-color: #e5e7eb;
             --primary-color: #3b82f6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
         }
         .dark {
-            --bg-color: #111827;
+            --bg-gradient-start: #1e293b;
+            --bg-gradient-end: #111827;
             --text-color: #f9fafb;
-            --card-bg: #1f2937;
+            --card-bg: rgba(31, 41, 55, 0.8);
             --input-bg: #374151;
             --border-color: #4b5563;
             --primary-color: #60a5fa;
+            --shadow-color: rgba(0, 0, 0, 0.3);
         }
         body {
-            background-color: var(--bg-color);
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
             color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
+            transition: background 0.3s, color 0.3s;
         }
         .theme-card {
             background-color: var(--card-bg);
-            border-color: var(--border-color);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
         }
         .theme-input {
             background-color: var(--input-bg);
@@ -86,7 +92,7 @@
                 </div>
 
                 <!-- Format and Quality Selection -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label for="format-select" class="block text-sm font-medium mb-1">Format</label>
                         <select id="format-select" class="theme-input w-full p-2 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none">
