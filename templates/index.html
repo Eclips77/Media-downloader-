@@ -70,11 +70,14 @@
                 <p class="text-gray-400 mt-2">Download YouTube videos as MP3 or MP4 with ease.</p>
             </div>
 
-            <!-- URL Input -->
+            <!-- URL Input / Search -->
             <form id="download-form">
                 <div class="relative mb-4">
-                    <input type="text" id="youtube-url" placeholder="Paste YouTube URL here..." class="theme-input w-full p-4 pr-12 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
+                    <input type="text" id="youtube-input" placeholder="Paste YouTube URL or search..." class="theme-input w-full p-4 pr-12 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
                 </div>
+
+                <!-- Search Results -->
+                <div id="search-results" class="hidden mb-4"></div>
 
                 <!-- Thumbnail Preview -->
                 <div id="thumbnail-preview" class="hidden text-center mb-4 slide-in">

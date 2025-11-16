@@ -63,6 +63,35 @@ def get_info():
         'thumbnail': info.get('thumbnail', '')
     })
 
+@app.route('/search', methods=['POST'])
+def search():
+    """Searches for videos on YouTube."""
+    query = request.get_json().get('query')
+    if not query:
+        return jsonify({'error': 'Query is required.'}), 400
+
+    try:
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'default_search': 'ytsearch5',  # Search for 5 results
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(query, download=False)
+            videos = []
+            if 'entries' in result:
+                for entry in result['entries']:
+                    videos.append({
+                        'id': entry.get('id'),
+                        'title': entry.get('title'),
+                        'thumbnail': entry.get('thumbnail'),
+                    })
+            return jsonify(videos)
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during search: {e}", exc_info=True)
+        return jsonify({'error': 'An unexpected server error occurred during search.'}), 500
+
 @app.route('/download', methods=['POST'])
 def download():
     """Handles the download request."""
@@ -84,6 +113,8 @@ def download():
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
             'noplaylist': True,
             'logger': logging.getLogger(),
+            'limit_rate': '10M',
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
         }
 
         if format_type == 'mp3':
