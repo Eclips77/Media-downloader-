@@ -12,17 +12,32 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
+def extract_video_id(url):
+    """Extracts the YouTube video ID from various URL formats."""
+    patterns = [
+        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})',
+        r'(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})',
+        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})',
+        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([a-zA-Z0-9_-]{11})'
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
 def get_video_info(url):
     """Gets video information without downloading."""
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-        'extractor_args': {'youtube': {'player_client': ['android']}}
-    }
+    video_id = extract_video_id(url)
+    if not video_id:
+        return None
+
+    ydl_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            return ydl.extract_info(url, download=False)
+            # Prepend Invidious instance to bypass age restrictions
+            invidious_url = f"https://yewtu.be/watch?v={video_id}"
+            return ydl.extract_info(invidious_url, download=False)
         except yt_dlp.utils.DownloadError as e:
             logging.error(f"Error extracting video info: {e}")
             return None
@@ -60,8 +75,7 @@ def search():
             'quiet': True,
             'no_warnings': True,
             'skip_download': True,
-            'default_search': 'ytsearch5',
-            'extractor_args': {'youtube': {'player_client': ['android']}}
+            'default_search': 'ytsearch5',  # Search for 5 results
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             result = ydl.extract_info(query, download=False)
@@ -72,8 +86,6 @@ def search():
                         'id': entry.get('id'),
                         'title': entry.get('title'),
                         'thumbnail': entry.get('thumbnail'),
-                        'channel': entry.get('channel'),
-                        'duration_string': entry.get('duration_string'),
                     })
             return jsonify(videos)
     except Exception as e:
@@ -90,6 +102,10 @@ def download():
     format_type = request.form.get('format', 'mp4')
     quality = request.form.get('quality')
 
+    video_id = extract_video_id(url)
+    if not video_id:
+        return jsonify({'error': 'Invalid YouTube URL.'}), 400
+
     temp_dir = tempfile.mkdtemp(prefix='yt-dl-')
 
     try:
@@ -98,7 +114,7 @@ def download():
             'noplaylist': True,
             'logger': logging.getLogger(),
             'limit_rate': '10M',
-            'extractor_args': {'youtube': {'player_client': ['android']}}
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
         }
 
         if format_type == 'mp3':
@@ -122,9 +138,12 @@ def download():
             }.get(quality, 'bestvideo+bestaudio/best')
             ydl_opts['format'] = format_note
 
+        # Prepend Invidious instance to bypass age restrictions
+        invidious_url = f"https://yewtu.be/watch?v={video_id}"
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             logging.info(f"Downloading with options: {ydl_opts}")
-            info = ydl.extract_info(url, download=True)
+            info = ydl.extract_info(invidious_url, download=True)
 
             filename = ydl.prepare_filename(info)
             if format_type == 'mp3':
@@ -161,7 +180,7 @@ def download():
         elif 'HTTP Error 429' in error_message:
             error_message = 'Too many requests. Please try again later.'
         else:
-            error_message = "Download failed. The video may be unavailable."
+            error_message = "Download failed. The video may be private or unavailable."
         return jsonify({'error': error_message}), 500
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}", exc_info=True)

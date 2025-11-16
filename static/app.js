@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const themeToggle = document.getElementById('theme-toggle');
-    const urlInput = document.getElementById('youtube-input');
+    const urlInput = document.getElementById('youtube-input'); // Changed from youtube-url
     const formatSelect = document.getElementById('format-select');
     const qualitySelect = document.getElementById('quality-select');
     const qualityContainer = document.getElementById('quality-container');
@@ -94,8 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             thumbnailImg.src = data.thumbnail;
             videoTitle.textContent = data.title;
             thumbnailPreview.classList.remove('hidden');
-            searchResultsContainer.innerHTML = '';
-            searchResultsContainer.classList.add('hidden');
+            searchResultsContainer.classList.add('hidden'); // Hide search results
 
         } catch (error) {
             showAlert(error.message);
@@ -107,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Searches for videos and displays results.
      */
     const searchVideos = async (query) => {
-        searchResultsContainer.innerHTML = '<p class="text-center text-gray-400">Searching...</p>';
+        searchResultsContainer.innerHTML = '<p class="text-center text-gray-500">Searching...</p>';
         searchResultsContainer.classList.remove('hidden');
 
         try {
@@ -137,20 +136,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const displaySearchResults = (videos) => {
         searchResultsContainer.innerHTML = '';
         if (videos.length === 0) {
-            searchResultsContainer.innerHTML = '<p class="text-center text-gray-400">No results found.</p>';
+            searchResultsContainer.innerHTML = '<p class="text-center text-gray-500">No results found.</p>';
+            searchResultsContainer.classList.remove('hidden');
             return;
         }
 
         videos.forEach(video => {
             const videoElement = document.createElement('div');
-            videoElement.className = 'theme-card flex items-center p-2 rounded-lg hover:bg-gray-700 cursor-pointer fade-in border';
+            videoElement.className = 'flex items-center p-2 rounded-lg hover:bg-gray-700 cursor-pointer';
             videoElement.innerHTML = `
-                <img src="${video.thumbnail}" alt="${video.title}" class="w-24 h-14 object-cover rounded mr-4">
-                <div class="flex flex-col">
-                    <span class="font-semibold">${video.title}</span>
-                    <span class="text-sm text-gray-400">${video.channel || ''}</span>
-                    <span class="text-xs text-gray-500">${video.duration_string || ''}</span>
-                </div>
+                <img src="${video.thumbnail}" alt="${video.title}" class="w-16 h-9 object-cover rounded mr-4">
+                <span class="text-sm">${video.title}</span>
             `;
             videoElement.addEventListener('click', () => {
                 const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
@@ -159,6 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             searchResultsContainer.appendChild(videoElement);
         });
+
+        searchResultsContainer.classList.remove('hidden');
     };
 
 
@@ -236,14 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (youtubeRegex.test(query)) {
                 fetchVideoInfo(query);
             } else if (query.length > 2) {
-                thumbnailPreview.classList.add('hidden');
                 searchVideos(query);
             } else {
-                searchResultsContainer.innerHTML = '';
                 searchResultsContainer.classList.add('hidden');
                 thumbnailPreview.classList.add('hidden');
             }
-        }, 800);
+        }, 1000);
     });
 
     // --- Initial Setup ---
