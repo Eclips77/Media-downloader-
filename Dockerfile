@@ -1,26 +1,28 @@
-# 1. Use an official Python runtime as a parent image
+# Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
-# 2. Set the working directory in the container
+# Set the working directory in the container
 WORKDIR /app
 
-# 3. Update and install system dependencies (ffmpeg)
-# Run as root and clean up apt-get lists to reduce image size
+# Update and install system dependencies (including ffmpeg)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 4. Copy the requirements file and install Python dependencies
+# Copy the requirements file and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy the rest of the application code into the container
-COPY . .
+# Copy the application source code into the container
+COPY src/ ./src
 
-# 6. Expose the port the app runs on. Render will automatically use this.
+# Create the download directory and set appropriate permissions
+RUN mkdir -p /tmp/downloads && chown -R www-data:www-data /tmp/downloads
+
+# Expose the port the app runs on
 EXPOSE 8080
 
-# 7. Define the command to run the application
-# We bind to 0.0.0.0 to allow external connections to the container.
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8080", "--timeout", "120"]
+# Define the command to run the application using Gunicorn
+# The app object is now located in src.web.app
+CMD ["gunicorn", "src.web.app:app", "--bind", "0.0.0.0:8080", "--timeout", "120", "--user", "www-data", "--group", "www-data"]
