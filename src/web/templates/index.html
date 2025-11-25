@@ -17,29 +17,35 @@
 
         /* Light & Dark theme custom properties */
         :root {
-            --bg-color: #f9fafb;
+            --bg-gradient-start: #f3e7e9;
+            --bg-gradient-end: #e3eeff;
             --text-color: #111827;
-            --card-bg: #ffffff;
-            --input-bg: #f3f4f6;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --input-bg: #ffffff;
             --border-color: #e5e7eb;
             --primary-color: #3b82f6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
         }
         .dark {
-            --bg-color: #111827;
+            --bg-gradient-start: #1e293b;
+            --bg-gradient-end: #111827;
             --text-color: #f9fafb;
-            --card-bg: #1f2937;
+            --card-bg: rgba(31, 41, 55, 0.8);
             --input-bg: #374151;
             --border-color: #4b5563;
             --primary-color: #60a5fa;
+            --shadow-color: rgba(0, 0, 0, 0.3);
         }
         body {
-            background-color: var(--bg-color);
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
             color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
+            transition: background 0.3s, color 0.3s;
         }
         .theme-card {
             background-color: var(--card-bg);
-            border-color: var(--border-color);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
         }
         .theme-input {
             background-color: var(--input-bg);
@@ -70,11 +76,17 @@
                 <p class="text-gray-400 mt-2">Download YouTube videos as MP3 or MP4 with ease.</p>
             </div>
 
-            <!-- URL Input -->
+            <!-- URL Input / Search -->
             <form id="download-form">
-                <div class="relative mb-4">
-                    <input type="text" id="youtube-url" placeholder="Paste YouTube URL here..." class="theme-input w-full p-4 pr-12 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
+                <div class="relative mb-4 flex">
+                    <input type="text" id="youtube-input" placeholder="Paste YouTube URL or search..." class="theme-input w-full p-4 pr-12 rounded-l-lg border-r-0 border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
+                    <button type="submit" id="search-btn" class="theme-button text-white px-6 py-3 rounded-r-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
+
+                <!-- Search Results -->
+                <div id="search-results" class="hidden mb-4"></div>
 
                 <!-- Thumbnail Preview -->
                 <div id="thumbnail-preview" class="hidden text-center mb-4 slide-in">
@@ -83,7 +95,7 @@
                 </div>
 
                 <!-- Format and Quality Selection -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label for="format-select" class="block text-sm font-medium mb-1">Format</label>
                         <select id="format-select" class="theme-input w-full p-2 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none">
@@ -99,8 +111,14 @@
                     </div>
                 </div>
 
+                <!-- Filename Input -->
+                <div class="mb-4">
+                    <label for="filename-input" class="block text-sm font-medium mb-1">Filename</label>
+                    <input type="text" id="filename-input" class="theme-input w-full p-2 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none" placeholder="Enter desired filename...">
+                </div>
+
                 <!-- Download Button -->
-                <button type="submit" id="download-btn" class="theme-button text-white w-full py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition-all duration-300 transform hover:scale-105 flex items-center justify-center mt-6">
+                <button type="button" id="download-btn" class="theme-button text-white w-full py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition-all duration-300 transform hover:scale-105 flex items-center justify-center mt-6">
                     <i class="fas fa-download mr-2"></i>
                     <span id="btn-text">Download</span>
                     <div id="loader" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2"></div>

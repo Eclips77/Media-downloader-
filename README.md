@@ -2,11 +2,13 @@
 
 YouTube Media Fetcher is a modern, production-ready web application that allows users to download YouTube videos as MP3 (audio) or MP4 (video) files with selectable quality options. It features a sleek, responsive frontend built with TailwindCSS and a robust, containerized Flask backend powered by `yt-dlp`.
 
-![App Screenshot](https://i.imgur.com/your-screenshot.png) <!-- Placeholder for a future screenshot -->
+![App Screenshot](https://i.imgur.com/your-new-screenshot.png) <!-- Placeholder for the new screenshot -->
 
 ## Features
 
-- **Single-Page Application**: A clean, beautiful, and intuitive user interface.
+- **Single-Page Application**: A clean, beautiful, and intuitive user interface with a modern gradient background and animations.
+- **YouTube Search**: Search for videos directly from the input field with dynamic, real-time results.
+- **Rich Video Info**: Search results and video previews include the channel name and video duration.
 - **Multiple Formats**: Download media as MP4 (video) or MP3 (audio).
 - **Quality Selection**:
     - **MP4**: Best Available, 1080p, 720p, 360p.
@@ -16,7 +18,6 @@ YouTube Media Fetcher is a modern, production-ready web application that allows 
 - **Responsive Design**: Looks great on both desktop and mobile devices.
 - **Dark/Light Theme**: A theme toggle for user preference.
 - **User-Friendly Notifications**: Animated, elegant alerts for errors, progress, and success.
-- **Reliable Backend**: Uses the powerful `yt-dlp` library for downloading and `ffmpeg` for conversion.
 - **Automatic Cleanup**: Temporary files are deleted immediately after being sent to the user.
 - **Containerized Deployment**: Uses Docker for a stable, reliable, and easy-to-deploy application on services like Render.
 
