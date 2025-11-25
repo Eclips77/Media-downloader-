@@ -78,8 +78,11 @@
 
             <!-- URL Input / Search -->
             <form id="download-form">
-                <div class="relative mb-4">
-                    <input type="text" id="youtube-input" placeholder="Paste YouTube URL or search..." class="theme-input w-full p-4 pr-12 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
+                <div class="relative mb-4 flex">
+                    <input type="text" id="youtube-input" placeholder="Paste YouTube URL or search..." class="theme-input w-full p-4 pr-12 rounded-l-lg border-r-0 border focus:ring-2 focus:ring-[var(--primary-color)] outline-none transition">
+                    <button type="submit" id="search-btn" class="theme-button text-white px-6 py-3 rounded-r-lg font-semibold hover:opacity-90 transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
 
                 <!-- Search Results -->
@@ -108,8 +111,14 @@
                     </div>
                 </div>
 
+                <!-- Filename Input -->
+                <div class="mb-4">
+                    <label for="filename-input" class="block text-sm font-medium mb-1">Filename</label>
+                    <input type="text" id="filename-input" class="theme-input w-full p-2 rounded-lg border focus:ring-2 focus:ring-[var(--primary-color)] outline-none" placeholder="Enter desired filename...">
+                </div>
+
                 <!-- Download Button -->
-                <button type="submit" id="download-btn" class="theme-button text-white w-full py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition-all duration-300 transform hover:scale-105 flex items-center justify-center mt-6">
+                <button type="button" id="download-btn" class="theme-button text-white w-full py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition-all duration-300 transform hover:scale-105 flex items-center justify-center mt-6">
                     <i class="fas fa-download mr-2"></i>
                     <span id="btn-text">Download</span>
                     <div id="loader" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2"></div>

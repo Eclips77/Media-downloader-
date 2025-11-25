@@ -5,12 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatSelect = document.getElementById('format-select');
     const qualitySelect = document.getElementById('quality-select');
     const downloadForm = document.getElementById('download-form');
+    const searchBtn = document.getElementById('search-btn');
     const downloadBtn = document.getElementById('download-btn');
     const btnText = document.getElementById('btn-text');
     const loader = document.getElementById('loader');
     const previewArea = document.getElementById('preview-area');
     const previewImg = document.getElementById('preview-img');
     const previewTitle = document.getElementById('preview-title');
+    const filenameInput = document.getElementById('filename-input');
     const alertContainer = document.getElementById('alert-container');
     const searchResultsContainer = document.getElementById('search-results');
     const downloadLinksContainer = document.getElementById('download-links');
@@ -20,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Quality Options ---
     const qualityOptions = {
-        video: ['Best', '1080p', '720p', '480p'],
         audio: ['High', 'Medium', 'Low']
     };
 
@@ -38,17 +39,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /**
-     * Updates the quality dropdown based on the selected format.
+     * Updates the quality dropdown based on the selected format and available qualities.
      */
-    const updateQualityOptions = () => {
+    const updateQualityOptions = (videoQualities = null) => {
         const formatValue = formatSelect.value;
-        const formatType = ['mp3', 'wav', 'm4a'].includes(formatValue) ? 'audio' : 'video';
-        const options = qualityOptions[formatType];
+        const isAudio = ['mp3', 'wav', 'm4a'].includes(formatValue);
+
+        let options = [];
+        if (isAudio) {
+            options = qualityOptions.audio;
+        } else if (videoQualities) {
+            options = videoQualities;
+        } else {
+            // Default or placeholder
+            options = ['Best', '1080p', '720p', '480p'];
+        }
 
         qualitySelect.innerHTML = '';
         options.forEach(option => {
             const opt = document.createElement('option');
-            opt.value = option.toLowerCase();
+            opt.value = option.toLowerCase().replace(' ', '');
             opt.textContent = option;
             qualitySelect.appendChild(opt);
         });
@@ -101,11 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedMedia = { ...data, url }; // Store the info
 
             previewTitle.textContent = data.title;
+            filenameInput.value = data.title; // Pre-fill filename
             if (data.type === 'playlist') {
                 previewImg.src = "https://i.imgur.com/3h2tS2A.png"; // Generic playlist icon
                 previewTitle.textContent = `Playlist: ${data.title}`;
+                // For playlists, we don't have individual video qualities, so use default.
+                updateQualityOptions();
             } else {
                 previewImg.src = data.thumbnail;
+                if (data.available_qualities) {
+                    updateQualityOptions(data.available_qualities);
+                }
             }
             previewArea.classList.remove('hidden');
 
@@ -191,7 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     url: selectedMedia.url,
                     format: formatSelect.value,
                     quality: qualitySelect.value,
-                    is_playlist: selectedMedia.type === 'playlist'
+                    is_playlist: selectedMedia.type === 'playlist',
+                    filename: filenameInput.value || selectedMedia.title
                 })
             });
 
@@ -225,24 +242,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     themeToggle.addEventListener('click', toggleTheme);
     formatSelect.addEventListener('change', updateQualityOptions);
-    downloadForm.addEventListener('submit', handleDownload);
 
-    let debounceTimer;
-    urlInput.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            const query = urlInput.value.trim();
-            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/(watch\?v=.+|playlist\?list=.+|.+)/;
+    const handleSearch = (e) => {
+        e.preventDefault();
+        const query = urlInput.value.trim();
+        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/(watch\?v=.+|playlist\?list=.+|.+)/;
 
-            if (youtubeRegex.test(query)) {
-                fetchMediaInfo(query);
-            } else if (query.length > 2) {
-                searchVideos(query);
-            } else {
-                resetUI();
-            }
-        }, 800);
-    });
+        if (youtubeRegex.test(query)) {
+            fetchMediaInfo(query);
+        } else if (query.length > 2) {
+            searchVideos(query);
+        } else {
+            resetUI();
+        }
+    };
+
+    downloadForm.addEventListener('submit', handleSearch);
+    searchBtn.addEventListener('click', handleSearch);
+    downloadBtn.addEventListener('click', handleDownload);
 
     // --- Initial Setup ---
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

@@ -71,10 +71,13 @@ def get_info_route():
 @app.route('/search', methods=['POST'])
 def search_route():
     """Searches for videos."""
+    logging.info("Search route called.")
     query = request.get_json().get('query')
     if not query:
+        logging.error("No query provided.")
         return jsonify({'error': 'Query is required.'}), 400
 
+    logging.info(f"Searching for: {query}")
     search_result = download_manager.search(query)
     if 'error' in search_result:
         return jsonify({'error': search_result['error']}), 500
@@ -91,11 +94,12 @@ def download_route():
     format_choice = data.get('format', 'mp4')
     quality = data.get('quality', 'best')
     is_playlist = data.get('is_playlist', False)
+    filename_template = data.get('filename')
 
     if not url:
         return jsonify({'error': 'URL is required.'}), 400
 
-    result = download_manager.download_media(url, format_choice, quality, is_playlist)
+    result = download_manager.download_media(url, format_choice, quality, is_playlist, filename_template=filename_template)
 
     if result['status'] == 'success':
         filename = result.get('filename')
