@@ -31,11 +31,14 @@ class DownloadManager:
             return {'error': str(e)}
 
     def get_info(self, url):
+        # For playlists, extract flat info to avoid fetching data for every video, which is slow.
+        # For single videos, get all info to extract available qualities.
+        is_playlist = 'list=' in url
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'simulate': True,
-            'extract_flat': 'in_playlist',
+            'extract_flat': is_playlist,
             'extractor_args': {'youtube': {'player_client': ['android']}},
         }
         try:
@@ -58,6 +61,30 @@ class DownloadManager:
         return self._sanitize_entry(info)
 
     def _sanitize_entry(self, entry):
+        available_qualities = None
+        if entry.get('formats'):
+            heights = set()
+            for f in entry['formats']:
+                if f.get('vcodec') != 'none' and f.get('height'):
+                    heights.add(f['height'])
+
+            if heights:
+                sorted_heights = sorted(list(heights), reverse=True)
+                qualities = []
+                for h in sorted_heights:
+                    if h >= 2160: qualities.append("4K")
+                    elif h >= 1440: qualities.append("1440p")
+                    elif h >= 1080: qualities.append("1080p")
+                    elif h >= 720: qualities.append("720p")
+                    elif h >= 480: qualities.append("480p")
+                    elif h >= 360: qualities.append("360p")
+
+                final_qualities = []
+                for q in qualities:
+                    if q not in final_qualities:
+                        final_qualities.append(q)
+                available_qualities = ["Best"] + final_qualities
+
         return {
             'type': 'video',
             'title': entry.get('title'),
@@ -66,18 +93,27 @@ class DownloadManager:
             'duration': entry.get('duration'),
             'id': entry.get('id'),
             'webpage_url': entry.get('webpage_url'),
+            'available_qualities': available_qualities,
         }
 
-    def download_media(self, url, format_choice='mp4', quality='best', is_playlist=False):
+    def download_media(self, url, format_choice='mp4', quality='best', is_playlist=False, filename_template=None):
         if is_playlist:
             return self._download_playlist(url, format_choice, quality)
         else:
-            return self._download_single_video(url, format_choice, quality)
+            return self._download_single_video(url, format_choice, quality, filename_template)
 
-    def _download_single_video(self, url, format_choice, quality):
+    def _download_single_video(self, url, format_choice, quality, filename_template=None):
         unique_id = str(uuid.uuid4())
-        # Use a unique filename that is harder to guess
-        output_template = os.path.join(self.download_path, f"{unique_id}.%(ext)s")
+
+        # Sanitize the user-provided filename to prevent security issues.
+        if filename_template:
+            # Remove extension and invalid characters
+            sanitized_name = os.path.splitext(filename_template)[0]
+            sanitized_name = "".join([c for c in sanitized_name if c.isalpha() or c.isdigit() or c in (' ', '-', '_')]).rstrip()
+            output_template = os.path.join(self.download_path, f"{sanitized_name}.%(ext)s")
+        else:
+            # Fallback to unique ID if no filename is provided
+            output_template = os.path.join(self.download_path, f"{unique_id}.%(ext)s")
 
         ydl_opts = self._get_ydl_opts(format_choice, quality)
         ydl_opts['outtmpl'] = output_template
@@ -87,16 +123,9 @@ class DownloadManager:
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                # Sanitize the final filename for the user
-                final_user_filename = ydl.prepare_filename(info).replace(f'{unique_id}.', f'{info.get("title", "download")}.')
-
-                # Rename the file on the server
-                server_filepath = self.final_filename
-                if server_filepath and os.path.exists(server_filepath):
-                    final_server_path = os.path.join(self.download_path, os.path.basename(final_user_filename))
-                    shutil.move(server_filepath, final_server_path)
-                    return {'status': 'success', 'filename': os.path.basename(final_server_path)}
+                ydl.extract_info(url, download=True)
+                if self.final_filename and os.path.exists(self.final_filename):
+                    return {'status': 'success', 'filename': os.path.basename(self.final_filename)}
             return {'status': 'error', 'message': 'Could not determine final filename.'}
         except (DownloadError, ExtractorError):
             return {'status': 'error', 'message': "The content is private or unavailable."}
@@ -153,9 +182,12 @@ class DownloadManager:
         else: # Video formats like MP4
             quality_map = {
                 'best': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                '4k': 'bestvideo[height<=2160][ext=mp4]+bestaudio[ext=m4a]/best[height<=2160][ext=mp4]/best',
+                '1440p': 'bestvideo[height<=1440][ext=mp4]+bestaudio[ext=m4a]/best[height<=1440][ext=mp4]/best',
                 '1080p': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best',
                 '720p': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best',
                 '480p': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best',
+                '360p': 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]/best',
             }
             ydl_opts['format'] = quality_map.get(quality, 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best')
         return ydl_opts
